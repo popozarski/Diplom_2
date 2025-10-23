@@ -1,27 +1,38 @@
 package org.example;
 
+import org.example.model.User;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.example.model.User;
+
 import java.util.List;
+
 import static org.hamcrest.Matchers.*;
 
-public class OrderCreationTest extends TestHelper {
+public class OrderCreationTest extends BaseTest {
+    private UserClient userClient = new UserClient();
+    private OrderClient orderClient = new OrderClient();
     private String token;
     private List<String> ingredients;
 
     @Before
     public void prepareTestData() {
-        super.setUp();
-        token = createUserAndGetToken(new User(
-                generateRandomEmail(), "password123", generateRandomName()
-        ));
-        ingredients = getValidIngredients();
+        User u = new User(DataGenerator.generateRandomEmail(), "password123", DataGenerator.generateRandomName());
+        var response = userClient.createUser(u, spec);
+        token = userClient.extractAccessToken(response);
+        ingredients = orderClient.getValidIngredients(spec);
+    }
+
+    @After
+    public void tearDown() {
+        if (token != null) {
+            userClient.deleteUser(token, spec);
+        }
     }
 
     @Test
     public void createOrderWithAuthTest() {
-        createOrder(token, ingredients)
+        orderClient.createOrder(token, ingredients, spec)
                 .then().statusCode(200)
                 .body("success", equalTo(true))
                 .body("order.number", notNullValue());
@@ -29,7 +40,7 @@ public class OrderCreationTest extends TestHelper {
 
     @Test
     public void createOrderWithoutAuthTest() {
-        createOrder(null, ingredients)
+        orderClient.createOrder(null, ingredients, spec)
                 .then().statusCode(200)
                 .body("success", equalTo(true))
                 .body("order.number", notNullValue());
@@ -37,7 +48,7 @@ public class OrderCreationTest extends TestHelper {
 
     @Test
     public void createOrderWithIngredientsTest() {
-        createOrder(token, ingredients)
+        orderClient.createOrder(token, ingredients, spec)
                 .then().statusCode(200)
                 .body("success", equalTo(true))
                 .body("order.number", notNullValue());
@@ -45,14 +56,14 @@ public class OrderCreationTest extends TestHelper {
 
     @Test
     public void createOrderWithoutIngredientsTest() {
-        createOrder(token, List.of())
+        orderClient.createOrder(token, List.of(), spec)
                 .then().statusCode(400)
                 .body("message", equalTo("Ingredient ids must be provided"));
     }
 
     @Test
     public void createOrderWithInvalidHashTest() {
-        createOrder(token, List.of("invalid_hash_123456"))
+        orderClient.createOrder(token, List.of("invalid_hash_123456"), spec)
                 .then().statusCode(500);
     }
 }

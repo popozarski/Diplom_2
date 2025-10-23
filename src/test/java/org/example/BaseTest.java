@@ -9,8 +9,8 @@ import org.junit.Before;
 public class BaseTest {
     protected static final String BASE_URL = "https://stellarburgers.education-services.ru";
     protected static final String REGISTER_PATH = "/api/auth/register";
-    protected static final String LOGIN_PATH    = "/api/auth/login";
-    protected static final String ORDERS_PATH   = "/api/orders";
+    protected static final String LOGIN_PATH = "/api/auth/login";
+    protected static final String ORDERS_PATH = "/api/orders";
     protected static final String INGREDIENTS_PATH = "/api/ingredients";
 
     protected RequestSpecification spec;
@@ -24,5 +24,3 @@ public class BaseTest {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     }
 }
-
-

@@ -1,25 +1,38 @@
 package org.example;
 
+import org.example.model.User;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.example.model.User;
+
 import static org.hamcrest.Matchers.*;
 
-public class UserLoginTest extends TestHelper {
+public class UserLoginTest extends BaseTest {
+    private UserClient userClient = new UserClient();
     private String email;
     private String password;
+    private String accessToken;
 
     @Before
     public void prepareTestData() {
-        super.setUp();
-        email = generateRandomEmail();
+        email = DataGenerator.generateRandomEmail();
         password = "password123";
-        createUserAndGetToken(new User(email, password, generateRandomName()));
+        User u = new User(email, password, DataGenerator.generateRandomName());
+        var response = userClient.createUser(u, spec);
+        accessToken = userClient.extractAccessToken(response);
+    }
+
+    @After
+    public void tearDown() {
+        if (accessToken != null) {
+            userClient.deleteUser(accessToken, spec);
+        }
     }
 
     @Test
     public void loginWithValidCredentialsTest() {
-        login(new LoginDto(email, password))
+        User loginUser = new User(email, password);
+        userClient.login(loginUser, spec)
                 .then().statusCode(200)
                 .body("success", equalTo(true))
                 .body("accessToken", notNullValue())
@@ -29,14 +42,16 @@ public class UserLoginTest extends TestHelper {
 
     @Test
     public void loginWithInvalidEmailTest() {
-        login(new LoginDto("wrong@test.ru", password))
+        User loginUser = new User("wrong@test.ru", password);
+        userClient.login(loginUser, spec)
                 .then().statusCode(401)
                 .body("message", equalTo("email or password are incorrect"));
     }
 
     @Test
     public void loginWithInvalidPasswordTest() {
-        login(new LoginDto(email, "wrongpass"))
+        User loginUser = new User(email, "wrongpass");
+        userClient.login(loginUser, spec)
                 .then().statusCode(401)
                 .body("message", equalTo("email or password are incorrect"));
     }

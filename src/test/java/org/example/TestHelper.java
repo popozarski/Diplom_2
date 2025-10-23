@@ -19,7 +19,6 @@ public class TestHelper extends BaseTest {
         return "User_" + System.currentTimeMillis();
     }
 
-    // === DTO ===
     public static class RegisterDto {
         public String email;
         public String password;
